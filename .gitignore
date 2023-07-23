@@ -27,3 +27,11 @@ doc/api/
 .flutter-plugins-dependencies
 .venv/
 .idea/
+
+# Python virtualenv files:
+pyvenv.cfg
+Lib/
+Scripts/
+
+# Python cache file
+*.pyc
