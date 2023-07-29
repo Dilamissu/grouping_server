@@ -30,9 +30,8 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
 
         print("GoogleSocialAuthSerializer.validate_auth_token() called")
 
-        return register.register_social_user(
+        return register.register_user(
             account = user_data['sub'],
-            email = user_data['email'],
             name = user_data['name'])
 
 

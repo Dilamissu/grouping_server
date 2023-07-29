@@ -26,7 +26,10 @@ SECRET_KEY = 'django-insecure-s9thampkfo-g-r$@ue%1iwl3#bn_--vft)aljwt-%c@xsc%b&7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.0.102',
+    'localhost'
+]
 
 
 # Application definition
@@ -115,6 +118,7 @@ REST_FRAMEWORK = {
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
+    'social_auth.authentication.AccountAuthBackend'
 )
 
 SIMPLE_JWT = {
