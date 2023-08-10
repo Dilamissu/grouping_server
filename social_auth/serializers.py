@@ -9,6 +9,18 @@ import os
 
 load_dotenv()
 
+class LoginSerializer(serializers.Serializer):
+    account = serializers.CharField(max_length=255)
+    password = serializers.CharField(max_length=255)
+    def validate(self, attrs):
+        print("LoginSerializer.validate() called")
+        self.account = attrs.get('account')
+        self.password = attrs.get('password')
+        return register.register_user(
+            account = self.account,
+            password = self.password
+        )
+
 # The toutorial's code is at https://github.com/CryceTruly/incomeexpensesapi/tree/master/social_auth
 class GoogleSocialAuthSerializer(serializers.Serializer):
     auth_token = serializers.CharField()
@@ -24,7 +36,7 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
             )
         print(user_data)
 
-        if user_data['aud'] != os.environ.get(env_key+'WEB_AND_ANDROID') and user_data['aud'] != os.environ.get(env_key+'IOS'):
+        if user_data['aud'] != os.environ.get(env_key+'WEB') and user_data['aud'] != os.environ.get(env_key+'IOS') and user_data['aud'] != os.environ.get(env_key+'ANDROID'):
             print(os.environ.get(env_key))
             raise AuthenticationFailed('oops, who are you?')
 

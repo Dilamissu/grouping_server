@@ -8,7 +8,7 @@ class AccountAuthBackend:
         print("AccountAuthBackend.authenticate() called")
         print("account: "+account)
         try:
-            user = User.objects.get(account=account)
+            user = User.objects.get(account=account,password=password)
         except User.DoesNotExist:
             return None
         return user
