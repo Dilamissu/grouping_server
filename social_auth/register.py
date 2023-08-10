@@ -4,7 +4,6 @@ from django.apps import apps
 User = apps.get_model('database', 'User')
 
 def register_user(account, name="unknown", password = ""):
-    print("register_social_user() called")
     if(account == None):
         raise Exception("Account is None")
 
@@ -23,7 +22,6 @@ def register_user(account, name="unknown", password = ""):
             'tokens': user.tokens()
         }
     except User.DoesNotExist:
-        print("User doesNotExist")
         user = User.objects.create_user(account=account, user_name=name,password=password)
         user = authenticate(account=account, password=password)
         print("User is logged:", user!=None)

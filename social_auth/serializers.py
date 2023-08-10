@@ -34,13 +34,10 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'The token is invalid or expired. Please login again.'
             )
-        print(user_data)
 
         if user_data['aud'] != os.environ.get(env_key+'WEB') and user_data['aud'] != os.environ.get(env_key+'IOS') and user_data['aud'] != os.environ.get(env_key+'ANDROID'):
             print(os.environ.get(env_key))
             raise AuthenticationFailed('oops, who are you?')
-
-        print("GoogleSocialAuthSerializer.validate_auth_token() called")
 
         return register.register_user(
             account = user_data['sub'],
@@ -59,7 +56,6 @@ class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
 
     def validate(self, attrs):
-        print("LogoutSerializer.validate() called")
         self.token = attrs['refresh_token']
         return attrs
 
