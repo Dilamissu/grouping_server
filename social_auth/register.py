@@ -11,11 +11,6 @@ def register_user(account, name="unknown", password = ""):
         user = User.objects.get(account=account)
         user = authenticate(account=account,password=password)
         print("User is logged:", user!=None)
-
-        print({
-            'user': user,
-            'tokens': user.tokens()
-        })
         
         return {
             'user': user,
@@ -25,11 +20,6 @@ def register_user(account, name="unknown", password = ""):
         user = User.objects.create_user(account=account, user_name=name,password=password)
         user = authenticate(account=account, password=password)
         print("User is logged:", user!=None)
-   
-        print({
-            'user': user,
-            'tokens': user.tokens()
-        })
 
         return {
             'user': user,
