@@ -29,9 +29,11 @@ def register_user(account, name="unknown", password = ""):
         user = User.objects.get(account=account)
         if(user!=None):
             return {
-                'error': "Wrong password"
+                'error-code': "Wrong_password",
+                'error': "Wrong password, please try again"
             }
         else:
             return {
-                'error': "Unexpected error"
+                'error-code': "Unexpected_error",
+                'error': "Unexpected error, please contact admin"
             }
