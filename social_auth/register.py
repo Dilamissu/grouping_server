@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.apps import apps
 
 User = apps.get_model('database', 'User')
@@ -10,6 +11,7 @@ def register_user(account, name="unknown", password = ""):
     try:
         user = User.objects.get(account=account)
         user = authenticate(account=account,password=password)
+        update_last_login(None, user)
         print("User is logged:", user!=None)
         
         return {
@@ -19,6 +21,7 @@ def register_user(account, name="unknown", password = ""):
     except User.DoesNotExist:
         user = User.objects.create_user(account=account, user_name=name,password=password)
         user = authenticate(account=account, password=password)
+        update_last_login(None, user)
         print("User is logged:", user!=None)
 
         return {
