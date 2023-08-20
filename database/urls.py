@@ -6,7 +6,7 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'workspaces', WorkspaceViewSet, basename='workspace')
 router.register(r'activities', ActivityViewSet, basename='activity')
 router.register(r'states', MissionStateViewSet, basename='mission_state')
-# router.register(r'images', ImageViewSet, basename='image')
+router.register(r'images', ImageViewSet, basename='image')
 urlpatterns = [
     path('', include(router.urls)),
 ]
