@@ -21,3 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("auth/", include("social_auth.urls")),
 ]
+urlpatterns += [
+    # API base url
+    path('api/', include('database.urls')),
+]
