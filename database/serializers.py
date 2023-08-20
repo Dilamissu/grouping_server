@@ -1,6 +1,12 @@
 from typing_extensions import Self
 from rest_framework import serializers
-from .models import Image, User, UserTag,  MissionState, Activity, Event, Mission, WorkspaceTag,  Workspace
+from .models import Image, User, UserTag,  MissionState, Activity, ActivityNotification, Event, Mission, WorkspaceTag,  Workspace
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = ['data', 'updated_at']
 
 
 class WorkspaceTagSerializer(serializers.ModelSerializer):
@@ -50,48 +56,96 @@ class MissionSerializer(serializers.ModelSerializer):
         extra_kwargs = {'state': {'required': False}}
 
 
+class ActivityNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityNotification
+        fields = ['notify_time']
+
+
 class ActivitySerializer(serializers.ModelSerializer):
-    parents = serializers.PrimaryKeyRelatedField(
-        many=True, read_only=True)
+    parents = serializers.PrimaryKeyRelatedField(many=True,
+                                                 read_only=True)
     event = EventSerializer(required=False)
     mission = MissionSerializer(required=False)
-    childs = serializers.PrimaryKeyRelatedField(
-        many=True, read_only=True)
-    contributors = serializers.PrimaryKeyRelatedField(
-        many=True, read_only=True)
+    childs = serializers.PrimaryKeyRelatedField(many=True,
+                                                read_only=True)
+    contributors = serializers.PrimaryKeyRelatedField(many=True,
+                                                      read_only=True)
+    notifications = ActivityNotificationSerializer(
+        many=True, required=False, allow_empty=True)
 
     class Meta:
         model = Activity
-        fields = ['id', 'title', 'description', 'creator', 'created_at',
-                  'belong_workspace', 'childs', 'parents', 'contributors', 'event', 'mission']
-        # extra_kwargs = {'childs': {'many': True, 'read_only': True},
-        #                 'contributors': {'many': True, 'read_only': True}}
+        fields = ['id', 'title', 'description', 'creator',
+                  'created_at', 'belong_workspace', 'childs',
+                  'parents', 'contributors', 'event', 'mission', 'notifications']
 
     def create(self, validated_data):
         event_data = validated_data.pop('event', None)
         mission_data = validated_data.pop('mission', None)
+        notifications_data = validated_data.pop('notifications', None)
         activity = Activity.objects.create(**validated_data)
 
         if event_data:
             Event.objects.create(belong_activity=activity, **event_data)
         if mission_data:
             Mission.objects.create(belong_activity=activity, **mission_data)
-
+        if notifications_data:
+            for notification_data in notifications_data:
+                ActivityNotification.objects.create(
+                    belong_activity=activity, **notification_data)
         return activity
 
 
 class ActivityPatchSerializer(serializers.ModelSerializer):
-    parents = serializers.PrimaryKeyRelatedField(
-        many=True, read_only=True)
+    parents = serializers.PrimaryKeyRelatedField(many=True,
+                                                 read_only=True)
     event = EventSerializer(required=False)
     mission = MissionSerializer(required=False)
+    notifications = ActivityNotificationSerializer(
+        many=True, required=False, allow_empty=True)
 
     class Meta:
         model = Activity
-        fields = ['id', 'title', 'description', 'creator', 'created_at',
-                  'belong_workspace', 'childs', 'parents', 'contributors', 'event', 'mission']
+        fields = ['id', 'title', 'description', 'creator',
+                  'created_at', 'belong_workspace', 'childs',
+                  'parents', 'contributors', 'event', 'mission', 'notifications']
         extra_kwargs = {'childs': {'many': True},
                         'contributors': {'many': True}}
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        event_data = validated_data.pop('event', None)
+        mission_data = validated_data.pop('mission', None)
+        notifications_data = validated_data.pop('notifications', None)
+        activity = Activity.objects.create(**validated_data)
+
+        if event_data:
+            try:
+                event = Event.objects.get(belong_activity=instance)
+                EventSerializer().update(event, event_data)
+            except Event.DoesNotExist:
+                EventSerializer().create(belong_activity=instance, **event_data)
+        if mission_data:
+            try:
+                mission = Mission.objects.get(belong_activity=instance)
+                MissionSerializer().update(mission, mission_data)
+            except Mission.DoesNotExist:
+                mission = MissionSerializer().create(belong_activity=instance, **mission_data)
+        if notifications_data:
+            for notification_data in notifications_data:
+                notification_id = notification_data.get('id', None)
+                if notification_id:
+                    notification = ActivityNotification.objects.get(
+                        id=notification_id, belong_activity=instance)
+                    ActivityNotificationSerializer().update(notification, notification_data)
+                else:
+                    ActivityNotificationSerializer().create(
+                        belong_activity=instance, **notification_data)
+        return activity
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -101,8 +155,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'account', 'password', 'real_name', 'user_name',
-                  'slogan', 'introduction', 'photo', 'tags', 'joined_workspaces', 'contributing_activities']
+        fields = ['id', 'account', 'password', 'real_name',
+                  'user_name', 'slogan', 'introduction', 'photo',
+                  'tags', 'joined_workspaces', 'contributing_activities']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

@@ -1,7 +1,11 @@
-from rest_framework import viewsets, mixins, generics
-from rest_framework.permissions import AllowAny
-from .models import Activity, User, Workspace, MissionState
-from .serializers import ActivitySerializer, UserSerializer, WorkspaceSerializer, MissionStateSerializer, ActivityPatchSerializer
+from rest_framework import viewsets, mixins
+from .models import Activity, User, Workspace, MissionState, Image
+from .serializers import ActivitySerializer, UserSerializer, WorkspaceSerializer, MissionStateSerializer, ActivityPatchSerializer, ImageSerializer
+
+
+class ImageViewSet(viewsets.ModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer
 
 
 class WorkspaceViewSet(viewsets.ModelViewSet):
@@ -9,7 +13,11 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
     serializer_class = WorkspaceSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(mixins.CreateModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin,
+                  mixins.ListModelMixin,
+                  viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 

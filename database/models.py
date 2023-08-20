@@ -9,7 +9,7 @@ class Image(models.Model):
 
 class User(models.Model):
     # [note: 'email/Oauth id/Line id']
-    account = models.CharField(max_length=20)
+    account = models.CharField(max_length=20, unique=True)
     password = models.CharField(max_length=20)
 
     real_name = models.CharField(max_length=20)
@@ -46,11 +46,11 @@ class WorkspaceTag(models.Model):
 
 class MissionState(models.Model):
     class Stage(models.TextChoices):
-        IN_PROGRESS = 'IP', _('in progress')
-        PENDING = 'P', _('pending')
-        CLOSE = 'C', _('close')
+        IN_PROGRESS = 'IN_PROGRESS', _('in progress')
+        PENDING = 'PENDING', _('pending')
+        CLOSE = 'CLOSE', _('close')
     stage = models.CharField(
-        max_length=2, choices=Stage.choices, default=Stage.IN_PROGRESS)
+        max_length=15, choices=Stage.choices, default=Stage.IN_PROGRESS)
     name = models.CharField(max_length=20)
     belong_workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
@@ -66,7 +66,12 @@ class Activity(models.Model):
         'self', symmetrical=False, blank=True, related_name='parents')
     contributors = models.ManyToManyField(
         User, related_name='contributing_activities')
-    notifications = models.JSONField(default=list)
+
+
+class ActivityNotification(models.Model):
+    belong_activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name='notifications')
+    notify_time = models.DateTimeField()
 
 
 class Event(models.Model):
