@@ -2,7 +2,7 @@ import requests
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.fields import empty
-from . import google, register
+from . import register
 # from grouping_project_backend.models import UserManager, User
 from dotenv import load_dotenv
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -18,33 +18,35 @@ class LoginSerializer(serializers.Serializer):
         print("LoginSerializer.validate() called")
         self.account = attrs.get('account')
         self.password = attrs.get('password')
-        return register.register_user(
+        return register.login_user(
             account = self.account,
             password = self.password
         )
 
+class RegisterSerializer(serializers.Serializer):
+    account = serializers.CharField(max_length=255)
+    password = serializers.CharField(max_length=255)
+    username = serializers.CharField(max_length=255,allow_blank = True)
+    def validate(self, attrs):
+        print("LoginSerializer.validate() called")
+        self.account = attrs.get('account')
+        self.password = attrs.get('password')
+        if "username" in attrs:
+            self.username = attrs.get('username')
+        else:
+            self.username = 'unknown'
+        return register.register_user(
+            account = self.account,
+            password = self.password,
+            name = self.username
+        )
+
 # The toutorial's code is at https://github.com/CryceTruly/incomeexpensesapi/tree/master/social_auth
 class GoogleSocialAuthSerializer(serializers.Serializer):
-    auth_token = serializers.CharField()
 
-    def validate_auth_token(self, auth_token):
-        env_key = "GOOGLE_CLIENT_ID_"
-        user_data = google.Google.validate_id_token(auth_token)
-        try:
-            user_data['sub']
-        except:
-            return {
-                'error-code': 'invalid_token',
-                'error':'The token is invalid or expired. Please login again.'
-            }
-
-        if user_data['aud'] != os.environ.get(env_key+'WEB') and user_data['aud'] != os.environ.get(env_key+'IOS') and user_data['aud'] != os.environ.get(env_key+'ANDROID'):
-            print(os.environ.get(env_key))
-            raise AuthenticationFailed('oops, who are you?')
-
-        return register.register_user(
-            account = user_data['sub'],
-            name = user_data['name'])
+    def validate(self, attrs):
+        return oauth2_token_exchange(client_id=os.environ.get('GOOGLE_CLIENT_ID_WEB'), client_secret=os.environ.get('GOOGLE_CLIENT_SECRET_WEB'), 
+                              tokenEndpoint='https://oauth2.googleapis.com/token',userPorfileEndpoint='https://oauth2.googleapis.com/tokeninfo',grant_type='authorization_code')
 
 
 class LineSocialAuthSerializer(serializers.Serializer):
@@ -54,42 +56,8 @@ class LineSocialAuthSerializer(serializers.Serializer):
 class GitHubSocialAuthSerializer(serializers.Serializer):
 
     def validate(self, attrs):
-
-        if not os.environ.get('AUTH_CODE'):
-            return {
-                'error-code': 'no_code',
-                'error' : 'No code in temparary storage, please send the oauth request again'
-            }
-        else:
-            # print(os.environ.get('AUTH_CODE'))
-            body = {
-                'client_id':os.environ.get('GITHUB_CLIENT_ID'),
-                'client_secret':os.environ.get('GITHUB_CLIENT_SECRET'),
-                'code':os.environ.get('AUTH_CODE'),
-                'redirect_uri':'http://localhost:5000/',
-            }
-            result = requests.post('https://github.com/login/oauth/access_token',json = body,headers={'Accept': 'application/json'})
-            result = result.json()
-            if 'access_token' in result:
-                print(result['access_token'])
-                user = requests.get('https://api.github.com/user',
-                                    headers={
-                                        'Accept': 'application/json',
-                                        'Authorization': 'Bearer '+result['access_token']
-                                        },
-                                    )
-                user=user.json()
-                print(user)
-                return register.register_user(
-                    account=user['id'],
-                    name=user['login']
-                )
-            else:
-                print(result)
-                return {
-                    'error-code': 'no_access_code',
-                    'error':'code handle process failed'
-                }
+        return oauth2_token_exchange(client_id=os.environ.get('GITHUB_CLIENT_ID'), client_secret=os.environ.get('GITHUB_CLIENT_SECRET'), 
+                              tokenEndpoint='https://github.com/login/oauth/access_token',userPorfileEndpoint='https://api.github.com/user')
         
 
 class CallbackSerializer(serializers.Serializer):
@@ -106,6 +74,7 @@ class CallbackSerializer(serializers.Serializer):
             raise AuthenticationFailed('Auth consent denied')
         else:
             os.environ['AUTH_CODE'] = self._dict.get('code')
+            print(self._dict.get('code'))
             return os.environ.get('AUTH_CODE')
 
 class LogoutSerializer(serializers.Serializer):
@@ -122,4 +91,48 @@ class LogoutSerializer(serializers.Serializer):
             return {
                 'error-code': 'invalid_token',
                 'error':'The token is invalid or expired. Please login again.'
+            }
+
+def oauth2_token_exchange(client_id:str, tokenEndpoint:str, userPorfileEndpoint:str, client_secret:str = '', grant_type:str = None):
+
+    if not os.environ.get('AUTH_CODE'):
+        return {
+            'error-code': 'no_code',
+            'error' : 'No code in temparary storage, please send the oauth request again'
+        }
+    else:
+        print(os.environ.get('AUTH_CODE'))
+        body = {
+            'client_id':client_id,
+            'client_secret':client_secret,
+            'code':os.environ.get('AUTH_CODE'),
+            'redirect_uri':'http://localhost:8000/',
+        }
+        if(grant_type != None):
+            body['grant_type'] = grant_type
+        result = requests.post(tokenEndpoint,json =  body,headers={'Accept': 'application/json'})
+        result = result.json()
+        print(result)
+        if 'access_token' in result:
+            print("Heeeeeeeeeeere it is! "+result['access_token'])
+            user = requests.get(userPorfileEndpoint,
+                                headers={
+                                    'Accept': 'application/json',
+                                    'Authorization': 'Bearer '+result['access_token']
+                                    },
+                                )
+            user=user.json()
+            print(user)
+            result = register.login_user(
+                account = user['id'],
+                name = user['login'])
+            if 'error' in result:
+                result = register.register_user(
+                    account = user['id'],
+                    name = user['login'])
+            return result
+        else:
+            return {
+                'error-code': 'no_access_code',
+                'error':'code handle process failed'
             }
