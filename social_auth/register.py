@@ -15,7 +15,7 @@ def login_user(account, password = ""):
         print("User is logged:", user!=None)
         
         return {
-            'user': user,
+            # 'user': user,
             'tokens': user.tokens()
         }
     except User.DoesNotExist:
@@ -48,7 +48,7 @@ def register_user(account, name, password = ""):
         print(token)
 
         return {
-            'user': user,
+            # 'user': user,
             'tokens': token
         }
     except:
