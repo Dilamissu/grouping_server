@@ -4,7 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from .serializers import (
-    LoginSerializer, LogoutSerializer, RegisterSerializer, GoogleSocialAuthSerializer, LineSocialAuthSerializer, GitHubSocialAuthSerializer, CallbackSerializer)
+    LoginSerializer, LogoutSerializer, RegisterSerializer,GoogleSocialAuthSerializer,
+    LineSocialAuthSerializer, GitHubSocialAuthSerializer, CallbackSerializer, PlatformSerializer)
 """
 conda activate django_4_2_2
 python manage.py makemigrations
@@ -14,6 +15,18 @@ python manage.py runserver 0.0.0.0:8000
 """
 
 # Create your views here.
+class PlatformView(GenericAPIView):
+
+    serializer_class = PlatformSerializer
+    
+    def post(self, request):
+        load_dotenv()
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(status=status.HTTP_200_OK)
+    
 class CallbackView(GenericAPIView):
 
     serializer_class = CallbackSerializer

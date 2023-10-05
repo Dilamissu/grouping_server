@@ -37,3 +37,4 @@ Scripts/
 
 # Python cache file
 *.pyc
+database/models.py

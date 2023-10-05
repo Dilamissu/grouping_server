@@ -28,9 +28,8 @@ SECRET_KEY = 'django-insecure-s9thampkfo-g-r$@ue%1iwl3#bn_--vft)aljwt-%c@xsc%b&7
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    # '192.168.0.102',
-    # 'localhost',
-    # '127.0.0.1'
+    'localhost',
+    '10.0.2.2'
 ]
 
 
@@ -67,12 +66,14 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5000",
-    "http://localhost:8080"
+    "http://localhost:8080",
+    "http://10.0.2.2:5000"
 ]
 
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:5000",
-    "http://localhost:8080"
+    "http://localhost:8080",
+    "http://10.0.2.2:5000"
 ]
 
 ROOT_URLCONF = 'grouping_server.urls'

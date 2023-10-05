@@ -16,29 +16,37 @@ class UserManager(BaseUserManager):
     def create_user(self, account="", user_name = 'unknown', password="", introduction="", slogan=""):
         if account is None:
             raise TypeError('Users must have an id.')
+        try:
+            User.objects.get(account=account)
+            return {
+                'error-code': "user_already_exist",
+                'error': "user already exist, please sign in."
+            }
+        except User.DoesNotExist:
+            user = self.model(account=account)
+            user.set_password(password)
+            user.user_name = user_name
+            user.real_name = ''
+            user.introduction = introduction
+            user.slogan = slogan
+            user.photo_id = None
+            user.save()
 
-        user = self.model(account=account)
-        user.set_password(password)
-        user.user_name = user_name
-        user.real_name = ''
-        user.introduction = introduction
-        user.slogan = slogan
-        user.photo_id = None
-        user.save()
-
-        return user
+            return user
     
     def create_superuser(self, account, password):
         if password is None:
             raise TypeError('Superusers must have a password.')
 
-        user = self.create_user(account=account, password=password)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save()
-
-        return user
-
+        result = self.create_user(account=account, password=password)
+        if type(result) != User:
+            return result
+        result.is_superuser = True
+        result.is_staff = True
+        result.save()
+        print(User.objects.all())
+        return result
+                        
 
     Auth_Providers = {"google": "google", "line": "line", "github": "github"}
     
