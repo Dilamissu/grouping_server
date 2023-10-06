@@ -2,12 +2,15 @@ import requests
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.fields import empty
-from . import register
+
 # from grouping_project_backend.models import UserManager, User
 from dotenv import load_dotenv
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 import os
+
+from . import register
+from .config import Config
 
 load_dotenv()
 
@@ -15,6 +18,7 @@ class PlatformSerializer(serializers.Serializer):
     platform = serializers.CharField(max_length=255)
     def validate(self, attrs):
         os.environ['PLATFORM'] = attrs.get('platform')
+        print(os.environ['PLATFORM'])
         return super().validate(attrs)
 
 class LoginSerializer(serializers.Serializer):
@@ -52,22 +56,27 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         return oauth2_token_exchange(client_id=os.environ.get('GOOGLE_CLIENT_ID_WEB'), client_secret=os.environ.get('GOOGLE_CLIENT_SECRET_WEB'), 
-                              tokenEndpoint='https://oauth2.googleapis.com/token',userPorfileEndpoint='https://oauth2.googleapis.com/tokeninfo',grant_type='authorization_code')
+                              tokenEndpoint=Config.googleTokenEndpoint ,userPorfileEndpoint=Config.googleUserProfileEndpoint,grant_type='authorization_code')
 
 
 class LineSocialAuthSerializer(serializers.Serializer):
-    def placeholder():
-        pass
+    def validate(self, attrs):
+        if os.environ.get('PLATFORM') == 'web':
+            return oauth2_token_exchange(client_id=os.environ.get('LINE_CLIENT_ID_WEB'), client_secret=os.environ.get('LINE_CLIENT_SECRET_WEB'), 
+                              tokenEndpoint=Config.lineTokenEndpoint,userPorfileEndpoint=Config.lineUserProfileEndpoint)
+        else:
+            return oauth2_token_exchange(client_id=os.environ.get('LINE_CLIENT_ID_MOBILE'), client_secret=os.environ.get('LINE_CLIENT_SECRET_MOBILE'), 
+                              tokenEndpoint=Config.lineTokenEndpoint,userPorfileEndpoint=Config.lineUserProfileEndpoint)
 
 class GitHubSocialAuthSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if os.environ.get('PLATFORM') == 'web':
             return oauth2_token_exchange(client_id=os.environ.get('GITHUB_CLIENT_ID_WEB'), client_secret=os.environ.get('GITHUB_CLIENT_SECRET_WEB'), 
-                              tokenEndpoint='https://github.com/login/oauth/access_token',userPorfileEndpoint='https://api.github.com/user')
+                              tokenEndpoint=Config.gitHubTokenEndpoint,userPorfileEndpoint=Config.gitHubUserProfileEndpoint)
         else:
             return oauth2_token_exchange(client_id=os.environ.get('GITHUB_CLIENT_ID_MOBILE'), client_secret=os.environ.get('GITHUB_CLIENT_SECRET_MOBILE'), 
-                              tokenEndpoint='https://github.com/login/oauth/access_token',userPorfileEndpoint='https://api.github.com/user')
+                              tokenEndpoint=Config.gitHubTokenEndpoint,userPorfileEndpoint=Config.gitHubUserProfileEndpoint)
         
 
 class CallbackSerializer(serializers.Serializer):

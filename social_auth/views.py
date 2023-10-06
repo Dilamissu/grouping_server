@@ -86,7 +86,15 @@ class LineSocialAuthView(GenericAPIView):
     serializer_class = LineSocialAuthSerializer
 
     def post(self, request):
-        pass
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
+
+        if 'error' in serializer.validated_data:
+            return Response((serializer.validated_data), status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            data = (serializer.validated_data)['tokens']['access']
+            return Response(data, status=status.HTTP_200_OK)
 
 
 class GitHubSocialAuthView(GenericAPIView):
